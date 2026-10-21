@@ -8,8 +8,8 @@
 |---|---|
 | 产品名 | DayDayUp DSH |
 | 应用 ID（CFBundleIdentifier） | `com.saber.daydayupdsh` |
-| 安装后的应用 | `/Applications/DayDayUp DSH.app` |
-| 数据目录 | `~/.dsh`（与官方版共用，本机未装官方版） |
+| 安装位置 | `/Volumes/saber/Applications/DayDayUp DSH.app`（与 `.prev.app` 同目录，外接盘） |
+| 数据目录 | `~/.dsh`（留在系统卷；仅 283M，搬移需每次设 `DSH_HOME`，不划算） |
 | 埋点 | 保留（上游默认） |
 | 更新通道 | `dsh-v*` 正式版 + alpha/rc 预发布 tag |
 | 当前基准 tag | `dsh-v0.2.1-rc.2` |
