@@ -51,6 +51,7 @@
 | `packages/client/ui-user-questions/src/client/QuestionReplyView.module.css` | "已回答"标签提为陶土色 | 2026-10-21 |
 | `packages/bundle/web-app/package.json` | 增加 `@deepseek-ai/dsh-client-ui-fork-brand` 依赖 | 2026-10-21 |
 | `packages/bundle/web-app/cordis.patch.yml` | `ui-brand-official` 行替换为 `ui-fork-brand`（避免 official 档案下双注册冲突） | 2026-10-21 |
+| `packages/bundle/base/cordis.patch.yml` | fork 默认权限档：沙箱 `danger-full-access` + 审批 `never`（保留 `DSH_PERMISSION_MODE` 环境变量可单次降档）；bash 超时 60s → 600s。模型提问/计划审批/轮次上限仍保留 | 2026-10-21 |
 
 自建文件（上游不存在，不会产生冲突）：`FORK.md`、`scripts/fork/*`、`packages/fork/*`（现有：`ui-fork-brand` — DayDayUp DSH 侧边栏品牌位）。
 
