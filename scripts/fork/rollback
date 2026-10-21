@@ -1,0 +1,29 @@
+#!/usr/bin/env zsh
+# rollback — 用 /Applications/<名>.prev.app 换回上一版，并提示数据备份恢复方法。
+# 用法: scripts/fork/rollback [-h]
+set -Eeuo pipefail
+ROOT="${DSH_FORK_ROOT:-$(dirname $0:A)/../..}"
+source "$ROOT/scripts/fork/lib/common.zsh"
+
+if [[ ${1:-} == -h || ${1:-} == --help ]]; then
+  print "用法: rollback — 将 $FORK_PREV_APP 换回 $FORK_INST_APP（双向交换）"
+  print "若应用在运行会先请求退出；数据回滚见下方 ~/.dsh 备份提示（仅手动执行）。"
+  exit 0
+fi
+[[ -d $FORK_PREV_APP ]] || fork_die 1 "不存在上一版应用: $FORK_PREV_APP"
+
+if fork_app_running; then
+  fork_log "请求退出当前应用…"
+  osascript -e 'quit app "'"$FORK_APP_NAME"'"' || true
+  fork_wait_app_exit 90 || fork_die 2 "应用未退出（可能点了取消），中止回滚"
+fi
+
+tmp="$FORK_APPS_DIR/$FORK_APP_NAME.rolling.app"
+mv "$FORK_INST_APP" "$tmp"
+mv "$FORK_PREV_APP" "$FORK_INST_APP"
+mv "$tmp" "$FORK_PREV_APP"
+open "$FORK_INST_APP"
+fork_log "已回滚到上一版并重新启动"
+fork_notify "已回滚到上一版"
+print "数据目录备份（如需回滚数据，手动执行 cp -a <备份>/. $FORK_DATA_DIR/）："
+ls -dt "$FORK_BACKUP_DIR"/dsh-*(N) 2>/dev/null | head -3 | sed 's/^/  /' || print "  （无备份）"

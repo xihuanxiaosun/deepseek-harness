@@ -1,0 +1,183 @@
+#!/usr/bin/env zsh
+# self-update <tag> — 后台合并打包 → 退出旧版 → 备份数据 → 替换 .app → 重启。
+#
+# 用法:
+#   scripts/fork/self-update <tag> [选项]
+# 选项:
+#   --yes              跳过"是否立即重启"询问
+#   --keep-backups N   数据备份保留份数（默认取 config.env）
+#   --no-push          成功后不推送 origin
+#   --branch <name>    要推进的本地分支（默认 custom；测试用）
+#   --fake-quit-reject 模拟用户在退出确认框点了取消（仅用于测试退出中止路径）
+#   -h, --help
+#
+# 设计：先在独立 worktree 把新版本完整打出来，确认成功后才退出旧版；
+# 任何一步失败都不替换旧版，已退出则重新打开。绝不自动解决合并冲突。
+
+set -Eeuo pipefail
+ROOT="${DSH_FORK_ROOT:-$(dirname $0:A)/../..}"
+source "$ROOT/scripts/fork/lib/common.zsh"
+
+tag="" ; opt_yes=0 ; opt_push="" ; branch="custom" ; opt_keep_backups="" ; fake_quit_reject=0
+args=("$@")
+while (( $#args )); do
+  a=$args[1]; shift args
+  case $a in
+    -h|--help) sed -n '2,15p' "$ROOT/scripts/fork/self-update" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --yes) opt_yes=1 ;;
+    --no-push) opt_push=0 ;;
+    --branch) branch=$args[1]; shift args ;;
+    --keep-backups) opt_keep_backups=$args[1]; shift args ;;
+    --fake-quit-reject) fake_quit_reject=1 ;;
+    -*) print -u2 "未知选项: $a（见 --help）"; exit 2 ;;
+    *) tag=$a ;;
+  esac
+done
+[[ -n $tag ]] || { print -u2 "缺少 <tag>，例如 dsh-v0.2.1-rc.3（见 --help）"; exit 2 }
+[[ $tag =~ ^dsh-v[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+\.[0-9]+)?$ ]] || { print -u2 "tag 格式不对: $tag"; exit 2 }
+[[ -d $ROOT/.git ]] || fork_die 3 "仓库不存在: $ROOT"
+opt_push=${opt_push:-$FORK_PUSH_ORIGIN}
+keep_backups=${opt_keep_backups:-$FORK_KEEP_BACKUPS}
+
+mkdir -p "$FORK_LOG_DIR"
+LOG="$FORK_LOG_DIR/update-$(date '+%Y%m%d-%H%M%S').log"
+exec > >(tee -a "$LOG") 2>&1
+
+PHASE="启动前"
+cleanup() { fork_unlock }
+trap 'cleanup' EXIT
+
+fork_log "=== self-update $tag（分支 $branch，日志 $LOG）==="
+fork_lock || fork_die 4 "已有一次 self-update 在运行（或锁被占用）：$HOME/Library/Caches/$FORK_APP_NAME/self-update.lock"
+(( $(fork_free_gb) >= FORK_MIN_FREE_GB )) || fork_die 5 "磁盘剩余不足 ${FORK_MIN_FREE_GB}GB（当前 $(fork_free_gb)GB）"
+
+# ---- worktree 合并 ----
+PHASE="合并"
+if [[ ! -d $FORK_WORKTREE/.git ]]; then
+  fork_log "创建打包 worktree: $FORK_WORKTREE"
+  git -C "$ROOT" worktree add "$FORK_WORKTREE" -b build "$branch" >/dev/null
+fi
+fork_log "worktree 切到 update/$tag（基于 $branch）"
+git -C "$FORK_WORKTREE" switch -C "update/$tag" "$branch" >/dev/null
+if ! git -C "$FORK_WORKTREE" merge --no-edit "$tag" >/dev/null 2>&1; then
+  git -C "$FORK_WORKTREE" merge --abort 2>/dev/null || true
+  fork_die 10 "合并 $tag 出现冲突，已在合并前停下，工作区与旧版均未受影响。请手动解决后重跑。"
+fi
+fork_log "合并完成：$(git -C "$FORK_WORKTREE" rev-parse --short HEAD)"
+
+# ---- 安装依赖 + 打包 ----
+PHASE="打包"
+cd "$FORK_WORKTREE"
+fork_log "pnpm install --frozen-lockfile …"
+corepack pnpm install --frozen-lockfile --reporter=append-only >/dev/null || fork_die 6 "pnpm install 失败（详见终端输出）"
+fork_log "打包 unsigned .app（完整构建，首次较慢）…"
+corepack pnpm run package:desktop:mac:arm64:unsigned --dir >/dev/null || fork_die 6 "打包失败"
+
+ART="$FORK_ARTIFACT_DIR/$FORK_APP_NAME.app"
+[[ -d $ART ]] || fork_die 6 "打包产物不存在: $ART"
+expected_ver=${tag#dsh-v}
+plist() { /usr/libexec/PlistBuddy -c "Print :$1" "$ART/Contents/Info.plist" 2>/dev/null }
+actual_ver=$(plist CFBundleShortVersionString)
+[[ $actual_ver == "$expected_ver" ]] || fork_die 6 "产物版本 $actual_ver ≠ 期望 $expected_ver"
+[[ $(plist CFBundleIdentifier) == "$FORK_APP_ID" ]] || fork_die 6 "产物应用 ID 不符: $(plist CFBundleIdentifier)"
+fork_log "新包校验通过：$ART（v$actual_ver）"
+fork_notify "新版本 $actual_ver 已就绪，准备替换"
+
+# ---- 询问是否立即重启 ----
+if (( ! opt_yes )) && [[ -t 0 ]]; then
+  printf "立即退出 %s 并替换新版本？[Y/n] " "$FORK_APP_NAME"
+  read -r reply
+  if [[ $reply == n* || $reply == N* ]]; then
+    fork_log "已按你的选择暂停。打包结果保留在分支 update/$tag，重跑本命令即可继续。"
+    exit 0
+  fi
+fi
+
+fail_after_quit() {
+  fork_notify "更新失败：$1，旧版已重新打开"
+  fork_log "❌ $1"
+  [[ -n ${reopen:-} ]] && [[ -d $reopen ]] && open "$reopen" 2>/dev/null
+  exit ${2:-1}
+}
+
+# ---- 退出旧版 ----
+PHASE="退出旧版"
+if fork_app_running; then
+  if (( fake_quit_reject )); then
+    fork_die 11 "（模拟）退出被用户取消，脚本中止替换，旧版继续运行"
+  fi
+  reopen="$FORK_INST_APP"
+  fork_log "发送退出指令…"
+  osascript -e 'quit app "'"$FORK_APP_NAME"'"' || true
+  if ! fork_wait_app_exit 90; then
+    # 用户在退出确认框点了"取消"，或进程卡住：识别并中止，旧版继续运行
+    fork_die 11 "应用未退出（可能在退出确认框点了取消）。已中止替换，旧版继续运行。"
+  fi
+  QUIT_TS=$(date +%s)
+  fork_log "旧版已全部退出"
+else
+  reopen=""
+  QUIT_TS=$(date +%s)
+  fork_log "检测到应用未在运行，跳过退出步骤"
+fi
+
+# ---- 备份数据目录 ----
+PHASE="备份数据"
+mkdir -p "$FORK_BACKUP_DIR"
+BACKUP="$FORK_BACKUP_DIR/dsh-$(date '+%Y%m%d-%H%M%S')"
+if [[ -d $FORK_DATA_DIR ]]; then
+  fork_log "备份 $FORK_DATA_DIR → $BACKUP"
+  ditto "$FORK_DATA_DIR" "$BACKUP" || fail_after_quit "备份数据目录失败" 7
+  backups=("$FORK_BACKUP_DIR"/dsh-*(N))
+  nb=$#backups
+  if (( nb > keep_backups )); then
+    for old in "${(@)backups[1,$((nb - keep_backups))]}"; do rm -rf "$old"; done
+  fi
+fi
+
+# ---- 替换 .app ----
+PHASE="替换应用"
+reopen="$FORK_PREV_APP"
+[[ -d $reopen ]] || reopen=""
+if [[ -d $FORK_INST_APP ]]; then
+  rm -rf "$FORK_PREV_APP"
+  mv "$FORK_INST_APP" "$FORK_PREV_APP" || fail_after_quit "无法移走旧 .app" 8
+fi
+mv "$ART" "$FORK_INST_APP" || fail_after_quit "移入新 .app 失败" 8
+[[ -n $reopen ]] || reopen="$FORK_INST_APP"
+fork_log "替换完成，停机 $(( $(date +%s) - QUIT_TS )) 秒"
+
+# ---- 启动新版 ----
+PHASE="启动"
+open "$FORK_INST_APP" || fail_after_quit "启动新版本失败" 9
+launched=0
+for i in {1..15}; do sleep 2; fork_app_running && { launched=1; break; }; done
+(( launched )) || fail_after_quit "新版本进程未出现" 9
+fork_log "新版本已启动 ✅"
+
+# ---- 收尾：快进分支、清理、推送 ----
+PHASE="收尾"
+if [[ $(git -C "$ROOT" branch --show-current) == "$branch" ]]; then
+  git -C "$ROOT" merge --ff-only "update/$tag" >/dev/null
+else
+  git -C "$ROOT" branch -f "$branch" "update/$tag"
+fi
+git -C "$FORK_WORKTREE" switch -C build "$branch" >/dev/null
+git -C "$ROOT" branch -D "update/$tag" >/dev/null
+fork_log "$branch 已推进到 $tag（$(git -C "$ROOT" rev-parse --short "$branch")）"
+if (( opt_push )); then
+  if git -C "$ROOT" push origin "$branch" >/dev/null 2>&1; then
+    fork_log "已推送 origin/$branch"
+  else
+    fork_notify "更新完成，但推送 origin 失败（可稍后手动 push）"
+    fork_log "⚠️ 推送 origin/$branch 失败，本地更新不受影响"
+  fi
+fi
+fork_notify "更新完成：$actual_ver（停机 $(( $(date +%s) - QUIT_TS )) 秒）"
+fork_log "=== 更新完成：$actual_ver，总停机 $(( $(date +%s) - QUIT_TS )) 秒，日志 $LOG ==="
+
+# 在 Apple Terminal 里成功后自动关闭本标签页（失败时窗口保留显示错误）
+if [[ ${TERM_PROGRAM:-} == Apple_Terminal && -n ${TTY:-} && ${DSH_CLOSE_TERMINAL:-1} == 1 ]]; then
+  osascript -e 'tell application "Terminal" to close (every tab of every window whose tty is "'"$TTY"'")' >/dev/null 2>&1 &
+fi
+exit 0

@@ -1,0 +1,18 @@
+#!/usr/bin/env zsh
+# launch-update-in-terminal <tag> [self-update 的其余参数…]
+# 让 self-update 运行在终端进程里（而非 dsh 的子进程，避免 dsh 退出时被连带杀掉）。
+# 成功时 self-update 会自动关闭本 Terminal 标签页；失败时窗口保留显示错误，
+# 同时依赖系统设置 → 描述文件 → Shell → "如果 shell 干净退出则关闭" 兜底。
+set -Eeuo pipefail
+ROOT="${DSH_FORK_ROOT:-$(dirname $0:A)/../..}"
+[[ -n ${1:-} ]] || { print -u2 "用法: launch-update-in-terminal <tag> [--yes …]"; exit 2 }
+tag=$1; shift
+script="$ROOT/scripts/fork/self-update"
+cmd="zsh '$script' '$tag'"
+for a in "$@"; do cmd+=" '$a'"; done
+cmd+="; exit"
+if ! osascript -e 'tell application "Terminal"' -e 'activate' -e "do script \"$cmd\"" -e 'end tell' 2>/dev/null; then
+  print -u2 "无法驱动 Terminal.app，请手动在终端运行: $cmd"
+  exit 1
+fi
+print "已在 Terminal 启动 self-update $tag"
