@@ -29,6 +29,7 @@ export function localMacOSPackageEnvironment(environment = process.env) {
   return {
     ...Object.fromEntries(Object.entries(environment).filter(([name]) => !AMBIENT_RELEASE_SETTING.test(name))),
     DSH_DESKTOP_APP_ID: 'com.saber.daydayupdsh',
+    DSH_DESKTOP_PRODUCT_NAME: 'DayDayUp DSH',
     DSH_DESKTOP_UNSIGNED: '1',
   }
 }
