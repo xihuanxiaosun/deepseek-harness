@@ -35,7 +35,8 @@
 
 | 上游文件 | 改动内容 | 改动日期 |
 |---|---|---|
-| （暂无，阶段 3 品牌化时会添加条目） | | |
+| `apps/desktop/scripts/electron-builder-config.mjs` | `productName` → `DayDayUp DSH`；`protocols[0].name` → `DayDayUp DSH`（第 108、116 行） | 2026-10-21 |
+| `apps/desktop/scripts/desktop-package-environment.mjs` | unsigned 包 `DSH_DESKTOP_APP_ID` → `com.saber.daydayupdsh`（第 31 行） | 2026-10-21 |
 
 自建文件（上游不存在，不会产生冲突）：`FORK.md`、`scripts/fork/*`、`packages/fork/*`。
 
