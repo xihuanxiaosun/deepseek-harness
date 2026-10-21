@@ -15,7 +15,7 @@
 # 任何一步失败都不替换旧版，已退出则重新打开。绝不自动解决合并冲突。
 
 set -Eeuo pipefail
-ROOT="${DSH_FORK_ROOT:-$(dirname $0:A)/../..}"
+ROOT="${DSH_FORK_ROOT:-$(cd "$(dirname $0:A)/../.." && pwd)}"
 source "$ROOT/scripts/fork/lib/common.zsh"
 
 tag="" ; opt_yes=0 ; opt_push="" ; branch="custom" ; opt_keep_backups="" ; fake_quit_reject=0
@@ -49,19 +49,27 @@ trap 'cleanup' EXIT
 
 fork_log "=== self-update $tag（分支 $branch，日志 $LOG）==="
 fork_lock || fork_die 4 "已有一次 self-update 在运行（或锁被占用）：$HOME/Library/Caches/$FORK_APP_NAME/self-update.lock"
-(( $(fork_free_gb) >= FORK_MIN_FREE_GB )) || fork_die 5 "磁盘剩余不足 ${FORK_MIN_FREE_GB}GB（当前 $(fork_free_gb)GB）"
+(( $(fork_free_gb "$FORK_WORKTREE") >= FORK_MIN_FREE_GB )) || fork_die 5 "build 卷（$FORK_WORKTREE）剩余不足 ${FORK_MIN_FREE_GB}GB（当前 $(fork_free_gb "$FORK_WORKTREE")GB）"
+(( $(fork_free_gb "$HOME") >= 3 )) || fork_die 5 "系统卷剩余不足 3GB（数据备份与 /Applications 需要）"
 
 # ---- worktree 合并 ----
 PHASE="合并"
-if [[ ! -d $FORK_WORKTREE/.git ]]; then
+if [[ ! -e $FORK_WORKTREE/.git ]]; then
   fork_log "创建打包 worktree: $FORK_WORKTREE"
-  git -C "$ROOT" worktree add "$FORK_WORKTREE" -b build "$branch" >/dev/null
+  git -C "$ROOT" worktree add "$FORK_WORKTREE" -b build "$branch" >/dev/null 2>&1 \
+    || git -C "$ROOT" worktree add "$FORK_WORKTREE" build >/dev/null
 fi
 fork_log "worktree 切到 update/$tag（基于 $branch）"
 git -C "$FORK_WORKTREE" switch -C "update/$tag" "$branch" >/dev/null
-if ! git -C "$FORK_WORKTREE" merge --no-edit "$tag" >/dev/null 2>&1; then
+# 本 worktree 未装依赖时 lefthook 钩子必挂；机械合并绕过钩子，冲突判据用未合并文件
+if ! merge_out=$(git -C "$FORK_WORKTREE" -c core.hooksPath=/dev/null merge --no-edit "$tag" 2>&1); then
+  unmerged=$(git -C "$FORK_WORKTREE" diff --name-only --diff-filter=U)
   git -C "$FORK_WORKTREE" merge --abort 2>/dev/null || true
-  fork_die 10 "合并 $tag 出现冲突，已在合并前停下，工作区与旧版均未受影响。请手动解决后重跑。"
+  if [[ -n $unmerged ]]; then
+    fork_log "冲突文件："$'\n'"$unmerged"
+    fork_die 10 "合并 $tag 出现冲突，已在合并前停下，工作区与旧版均未受影响。请手动解决后重跑。"
+  fi
+  fork_die 10 "合并 $tag 失败（非冲突）：$merge_out"
 fi
 fork_log "合并完成：$(git -C "$FORK_WORKTREE" rev-parse --short HEAD)"
 

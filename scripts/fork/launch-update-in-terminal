@@ -4,7 +4,7 @@
 # 成功时 self-update 会自动关闭本 Terminal 标签页；失败时窗口保留显示错误，
 # 同时依赖系统设置 → 描述文件 → Shell → "如果 shell 干净退出则关闭" 兜底。
 set -Eeuo pipefail
-ROOT="${DSH_FORK_ROOT:-$(dirname $0:A)/../..}"
+ROOT="${DSH_FORK_ROOT:-$(cd "$(dirname $0:A)/../.." && pwd)}"
 [[ -n ${1:-} ]] || { print -u2 "用法: launch-update-in-terminal <tag> [--yes …]"; exit 2 }
 tag=$1; shift
 script="$ROOT/scripts/fork/self-update"

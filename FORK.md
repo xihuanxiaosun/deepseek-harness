@@ -13,7 +13,7 @@
 | 埋点 | 保留（上游默认） |
 | 更新通道 | `dsh-v*` 正式版 + alpha/rc 预发布 tag |
 | 当前基准 tag | `dsh-v0.2.1-rc.2` |
-| 打包 worktree | `~/code/my-dsh-build`（`custom` 的持久复用 worktree） |
+| 打包 worktree | `/Volumes/saber/dsh-build`（系统卷空间紧张，放大数据卷；`scripts/fork/config.env` 的 `FORK_WORKTREE`） |
 
 ## 远程与分支策略
 

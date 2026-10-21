@@ -2,7 +2,7 @@
 # rollback — 用 /Applications/<名>.prev.app 换回上一版，并提示数据备份恢复方法。
 # 用法: scripts/fork/rollback [-h]
 set -Eeuo pipefail
-ROOT="${DSH_FORK_ROOT:-$(dirname $0:A)/../..}"
+ROOT="${DSH_FORK_ROOT:-$(cd "$(dirname $0:A)/../.." && pwd)}"
 source "$ROOT/scripts/fork/lib/common.zsh"
 
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then
