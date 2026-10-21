@@ -2787,6 +2787,9 @@ importers:
       '@deepseek-ai/dsh-client-ui-directory-picker-native':
         specifier: workspace:*
         version: link:../../client/ui-directory-picker-native
+      '@deepseek-ai/dsh-client-ui-fork-brand':
+        specifier: workspace:*
+        version: link:../../fork/ui-fork-brand
       '@deepseek-ai/dsh-client-ui-goal':
         specifier: workspace:*
         version: link:../../client/ui-goal
@@ -10012,6 +10015,18 @@ importers:
       '@deepseek-ai/dsh-typert-protocol':
         specifier: workspace:*
         version: link:../../typert/protocol
+
+  packages/fork/ui-fork-brand:
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:~
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-client-ui-renderer':
+        specifier: workspace:*
+        version: link:../../client/ui-renderer
+      '@deepseek-ai/dsh-client-ui-sidebar':
+        specifier: workspace:*
+        version: link:../../client/ui-sidebar
 
   packages/fs/fs:
     devDependencies:

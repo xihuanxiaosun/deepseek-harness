@@ -41,8 +41,22 @@
 | `apps/desktop/scripts/package-macos.ts` | appPath 改用 `DSH_DESKTOP_PRODUCT_NAME`（第 81 行） | 2026-10-21 |
 | `apps/desktop/scripts/package-target.ts` | 公证 appPath 改用 `DSH_DESKTOP_PRODUCT_NAME`（第 518 行） | 2026-10-21 |
 | `apps/desktop/scripts/verify-retained-desktop.ts` | 发布校验 app 名改用 `DSH_DESKTOP_PRODUCT_NAME`（第 42 行） | 2026-10-21 |
+| `packages/client/ui-theme/src/styles/design-platform.css` | 追加 CDS 色板重映射块（陶土主色/暖色明暗阶梯/品牌按钮），文件尾部覆盖 | 2026-10-21 |
+| `packages/client/ui-workspace/src/client/rows/Rows.module.css` | CDS 行样式：10px 圆角、陶土文件夹芯片、数量徽标、选中态、时间 11px | 2026-10-21 |
+| `packages/client/ui-workspace/src/client/rows/Rows.tsx` | 项目行加会话数徽标（`row.count.aria`） | 2026-10-21 |
+| `packages/client/ui-workspace/src/client/rows/WorkspaceBrowser.module.css` | 分区标题小型大写字距；搜索展开为胶囊+发丝边 | 2026-10-21 |
+| `packages/client/ui-workspace/src/client/locales.ts` | 新增 `row.count.aria`（中英） | 2026-10-21 |
+| `packages/client/ui-chat/src/client/chat/ReasoningRow.module.css` | 思考体展开入场动画（160ms 淡入下滑，尊重 reduced-motion） | 2026-10-21 |
+| `packages/client/ui-user-questions/src/client/QuestionComposer.module.css` | 决策卡：选中项陶土染色+编号牌、勾选框陶土填充、eyebrow 提暖 | 2026-10-21 |
+| `packages/client/ui-user-questions/src/client/QuestionReplyView.module.css` | "已回答"标签提为陶土色 | 2026-10-21 |
+| `packages/bundle/web-app/package.json` | 增加 `@deepseek-ai/dsh-client-ui-fork-brand` 依赖 | 2026-10-21 |
+| `packages/bundle/web-app/cordis.patch.yml` | `ui-brand-official` 行替换为 `ui-fork-brand`（避免 official 档案下双注册冲突） | 2026-10-21 |
 
-自建文件（上游不存在，不会产生冲突）：`FORK.md`、`scripts/fork/*`、`packages/fork/*`。
+自建文件（上游不存在，不会产生冲突）：`FORK.md`、`scripts/fork/*`、`packages/fork/*`（现有：`ui-fork-brand` — DayDayUp DSH 侧边栏品牌位）。
+
+## UI 改造基准（CDS）
+
+界面以 open-claude-ui（Claude Design System 逆向还原，MIT）为基准：陶土 `#d97757`、暖色四层表面阶梯、18-20px 气泡圆角、小标签大写分区头。参考仓库克隆在 `/Volumes/saber/reference/open-claude-ui`（含离线 Storybook `docs/claude-components-storybook.html`）。令牌经 `design-platform.css` 尾部覆盖块全局生效；组件级借鉴按需移植，桌面壳（hiddenInset/vibrancy/合成音效）待做。
 
 ## 更新流程（阶段 4 落地后生效）
 

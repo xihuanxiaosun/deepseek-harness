@@ -332,9 +332,12 @@
     - id: ui-chat
       name: '@deepseek-ai/dsh-client-ui-chat'
 
-    # Official occupants for the generic sidebar and conversation brand slots.
-    - id: ui-brand-official
-      name: '@deepseek-ai/dsh-client-ui-brand-official'
+    # Fork occupants for the generic sidebar and conversation brand slots:
+    # DayDayUp DSH wordmark replaces the official whale/fish brand. The
+    # official brand row is intentionally absent — its slots would collide
+    # with ours in --profile official builds.
+    - id: ui-fork-brand
+      name: '@deepseek-ai/dsh-client-ui-fork-brand'
 
     - id: ui-attachment
       name: '@deepseek-ai/dsh-client-ui-attachment'

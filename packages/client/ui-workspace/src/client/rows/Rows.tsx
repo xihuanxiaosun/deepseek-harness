@@ -265,6 +265,9 @@ export function ProjectRowItem({ group, containsCurrentDescendant = false, onTog
       <span className={css.projectText}>
         <span className={css.title}>{label}</span>
       </span>
+      <span className={css.projectCount} aria-label={t('row.count.aria', { n: group.sessionCount })}>
+        {group.sessionCount}
+      </span>
       <span className={css.rowActions}>
         {actions !== undefined && (
           <Menu

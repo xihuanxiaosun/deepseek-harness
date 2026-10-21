@@ -75,3 +75,27 @@
   padding: 4px 0 4px calc(22px + var(--dsh-content-font-delta, 0px));
   min-width: 0;
 }
+
+/* CDS expand entrance: the body fades and settles downward as the disclosure
+ * opens. The body mounts only while expanded, so this plays on each open;
+ * collapse stays the instant snap the sticky-header logic relies on. */
+@keyframes reasoning-body-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.root[data-expanded] .thinkBody {
+  animation: reasoning-body-in 160ms var(--ds-ease-in-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-expanded] .thinkBody {
+    animation: none;
+  }
+}

@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  border-radius: var(--dsw-radius-md);
+  border-radius: 10px;
   padding: 0 8px;
   padding-inline-start: calc(8px + var(--dsh-workspace-indent, 0px));
   cursor: pointer;
@@ -16,8 +16,13 @@
   background: var(--dsw-alias-interactive-bg-hover);
 }
 
+/* Selected session: solid warm pill + medium-weight title (CDS selected row). */
 .sessionRow.selected {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--dsw-specific-sidebar-nav-item-active);
+}
+
+.sessionRow.selected .title {
+  font-weight: 500;
 }
 
 .searchResultRow {
@@ -104,6 +109,47 @@
 
 .projectRow .rowActions {
   height: 20px;
+}
+
+/* Project leading chip: the folder glyph rides a warm rounded tile so each
+ * project reads as a first-class card header rather than a bare icon. */
+.projectRow .folder {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dsw-specific-sidebar-nav-item-active-accent);
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.projectRow .folderActive {
+  color: var(--dsw-alias-state-business-primary);
+}
+
+/* Session-count badge: sits in the trailing cell, swaps out for the hover
+ * action buttons exactly like the session row's time cell. */
+.projectCount {
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--dsw-alias-label-tertiary);
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.projectRow:hover .projectCount,
+.projectRow.menuOpen .projectCount {
+  display: none;
 }
 
 /* Session cell (figma): pad 8, a 16px status slot, then a 4px title gap. */
@@ -221,9 +267,10 @@
 
 .time {
   flex: none;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 16px;
   color: var(--dsw-alias-label-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
 .pinIndicator {
