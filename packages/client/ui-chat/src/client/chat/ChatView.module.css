@@ -69,7 +69,7 @@
   ~ :not([hidden]):not(.flowItem:is(:empty, :has(> [data-slot="conversation.chat.node"]:empty))),
 .column:has(> .older) > :global([data-slot="conversation.chat.flow"])
   > :not([hidden]):not(.flowItem:is(:empty, :has(> [data-slot="conversation.chat.node"]:empty))) {
-  margin-top: var(--dsh-chat-flow-gap, 6px);
+  margin-top: var(--dsh-chat-flow-gap, 10px);
 }
 
 /* Process rows sit 6px apart; an Assistant response is separated from its

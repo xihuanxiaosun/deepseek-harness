@@ -1,10 +1,10 @@
 .surface,
 .backing {
-  border-radius: var(--dsw-radius-lg);
+  border-radius: 12px;
 }
 
 .compact {
-  border-radius: var(--dsw-radius-md);
+  border-radius: 10px;
 }
 
 :where(.surface) {

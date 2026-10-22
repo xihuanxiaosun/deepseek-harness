@@ -100,7 +100,7 @@
   min-height: 34px;
   padding: 6px 8px;
   border: none;
-  border-radius: var(--dsw-radius-md);
+  border-radius: 8px;
   background: transparent;
   cursor: pointer;
   font-size: 13px;

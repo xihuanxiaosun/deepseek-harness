@@ -51,6 +51,17 @@
 | `packages/client/ui-user-questions/src/client/QuestionReplyView.module.css` | "已回答"标签提为陶土色 | 2026-10-21 |
 | `packages/bundle/web-app/package.json` | 增加 `@deepseek-ai/dsh-client-ui-fork-brand` 依赖 | 2026-10-21 |
 | `packages/bundle/web-app/cordis.patch.yml` | `ui-brand-official` 行替换为 `ui-fork-brand`（避免 official 档案下双注册冲突） | 2026-10-21 |
+| `packages/client/ui-theme/src/styles/base.css` | 新增 CDS 动效令牌（--cds-ease-swift/expand/overshoot/snap、dur-fast..slow） | 2026-10-22 |
+| `packages/client/ui-theme/src/styles/design-platform.css` | CDS 色板重映射块重写为精准值：中性明暗阶梯（#f9f9f7/#0b0b0b 系）、文本 #151515/#525252/#8a8a8a、边界 alpha 0.05/0.10/0.20、气泡 5% 墨色、侧栏 hover/selected 填充 | 2026-10-22 |
+| `packages/client/ui-theme/src/styles/gradient-shadow-text.css` | elevation panel/prominent 换 CDS 双环栈（stroke 环 + 漫反射投影） | 2026-10-22 |
+| `packages/client/ui-primitives/src/Button.module.css` | CDS 按钮阶梯：md 32px/13.5px、8px 圆角、按压 0.975 回弹（60ms 塌陷/450ms 弹簧）、primary 陶土白字 | 2026-10-22 |
+| `packages/client/ui-primitives/src/MenuSurface.module.css` | 弹出层圆角 16→12px（compact 12→10） | 2026-10-22 |
+| `packages/client/ui-primitives/src/Menu.module.css` | 菜单项高亮圆角 12→8px | 2026-10-22 |
+| `packages/client/ui-primitives/src/Modal.module.css` | 对话框圆角 28→16px | 2026-10-22 |
+| `packages/client/ui-conversation/src/client/skeleton/InputBar.module.css` | Composer：28→20px 圆角、三态双环阴影（rest/hover/focus-within，暗色独立）、发送键 34 圆→32px/8px 陶土方键 + 按压缩放 | 2026-10-22 |
+| `packages/client/ui-chat/src/client/chat/MessageItem.module.css` | 用户气泡：20→18px 圆角、12/16 内边距、14/20 行高、发丝投影 | 2026-10-22 |
+| `packages/client/ui-chat/src/client/chat/AssistantMarkdown.module.css` | 助手正文 14/20（原 24px 行高）、块距 16→10、text-wrap pretty | 2026-10-22 |
+| `packages/client/ui-chat/src/client/chat/ChatView.module.css` | 基础流间距 6→10px（CDS 块距） | 2026-10-22 |
 | `packages/bundle/base/cordis.patch.yml` | fork 默认权限档：沙箱 `danger-full-access` + 审批 `never`（保留 `DSH_PERMISSION_MODE` 环境变量可单次降档）；bash 超时 60s → 600s。模型提问/计划审批/轮次上限仍保留 | 2026-10-21 |
 
 自建文件（上游不存在，不会产生冲突）：`FORK.md`、`scripts/fork/*`、`packages/fork/*`（现有：`ui-fork-brand` — DayDayUp DSH 侧边栏品牌位）。

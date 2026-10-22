@@ -1,4 +1,5 @@
-/* Button sizes share the global control-radius scale. */
+/* CDS button ladder: md 32px/13.5px radius 8, sm 28px/12.5px radius 8,
+ * squish press physics (60ms collapse, spring release), swift hovers. */
 .button {
   box-sizing: border-box;
   display: inline-flex;
@@ -6,40 +7,64 @@
   justify-content: center;
   gap: 4px;
   border: none;
-  border-radius: var(--dsw-radius-md);
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  line-height: 22px;
+  font-size: 13.5px;
+  line-height: 18px;
   color: var(--dsw-alias-label-primary);
   background: transparent;
   padding: 0 14px;
+  transition:
+    background-color 150ms var(--cds-ease-swift),
+    color 150ms ease,
+    transform var(--cds-dur-slow) linear(0, 0.2459, 0.6526, 0.9468, 1.0764, 1.0915, 1.0585, 1.0219, 0.9993, 0.9914, 0.9921, 0.9957, 0.9988, 1.0004, 1);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.975);
+  transition:
+    background-color var(--cds-dur-fast) ease-out,
+    transform var(--cds-dur-fast) ease-out;
 }
 
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.4;
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .button:active:not(:disabled) {
+    transform: none;
+    transition: background-color 120ms ease, color 120ms ease;
+  }
 }
 
 .md {
-  height: 36px;
+  height: 32px;
 }
 
 /* Compact controls retain their dimensions across filled and outlined variants. */
 .sm {
   height: 28px;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: 12.5px;
+  line-height: 16px;
   padding: 0 10px;
-  border-radius: var(--dsw-radius-sm);
+  border-radius: 8px;
 }
 
 .primary {
   background: var(--dsw-alias-button-primary-fill);
   color: var(--dsw-alias-label-primary-foreground);
+  font-weight: 500;
 }
 
 .primary:hover:not(:disabled) {
   background: var(--dsw-alias-button-primary-hover);
+}
+
+.primary:active:not(:disabled) {
+  filter: brightness(0.95);
 }
 
 .ghost:hover:not(:disabled) {

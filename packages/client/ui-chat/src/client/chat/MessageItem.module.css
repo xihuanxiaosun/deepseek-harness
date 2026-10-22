@@ -25,13 +25,12 @@
      keeps narrow windows sane. */
   max-width: 100%;
   background: var(--dsw-specific-bubble);
-  border-radius: var(--dsw-radius-xl);
-  /* 42px single-line bubble at the default size: 22 line + 10 vertical
-     padding each side; the Settings font-size preference moves size and line
-     height together through the body-published axis. */
-  padding: 10px 16px;
+  /* CDS bubble: 18px radius, 12/16 padding, 14/20 text, hairline lift. */
+  border-radius: 18px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
   font-size: var(--dsh-content-font-size, 14px);
-  line-height: calc(22px + var(--dsh-content-font-delta, 0px));
+  line-height: calc(20px + var(--dsh-content-font-delta, 0px));
   color: var(--dsw-alias-label-primary);
   /* The projected user text is inline runs; the bubble owns wrapping so a
      decorated single-line message stays one line. */
